@@ -1,48 +1,41 @@
 package racingcar.race;
 
+import racingcar.view.InputView;
+import racingcar.view.OutputView;
+
 import java.util.List;
-import racingcar.view.InputReader;
-import racingcar.view.OutputWriter;
 
 public class RacingGame {
     private final Computer computer;
-    private GameState gameState;
 
     public RacingGame() {
         this.computer = new Computer();
     }
 
     public void start() {
-        run();
-    }
-
-    public void run() {
-        setGame();
-        playGame();
-        endGame();
-    }
-
-    private void setGame() {
-        gameState = GameState.PLAY;
-    }
-
-    private void playGame() {
-        computer.inputCarNames();
-        computer.inputTimes();
-
-        OutputWriter.printResult();
+        initializeGame();
         race();
+        announceWinners();
+    }
+
+    private void initializeGame() {
+        List<Car> cars = InputView.readCarNames();
+        int times = InputView.readAttemptTimes();
+        computer.prepareGame(cars, times);
     }
 
     private void race() {
-        for(int i = 0; i < computer.getTimes(); i++) {
-            computer.moveCarWithRandomNumber();
-            OutputWriter.printRacing(computer);
+        OutputView.printResult();
+        int totalRounds = computer.getTimes();
+
+        for(int round = 0; round < totalRounds; round++) {
+            computer.moveCars();
+            OutputView.printRaceStatus(computer.getCars());
         }
     }
 
-    private void endGame() {
-        computer.findWinners();
-        OutputWriter.printWinners(computer);
+    private void announceWinners() {
+        List<Car> winners = computer.determineWinners();
+        OutputView.printWinners(winners);
     }
 }

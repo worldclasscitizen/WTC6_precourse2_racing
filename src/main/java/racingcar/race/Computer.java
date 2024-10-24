@@ -3,74 +3,84 @@ package racingcar.race;
 import camp.nextstep.edu.missionutils.Randoms;
 import java.util.ArrayList;
 import java.util.List;
+
+import racingcar.util.InputValidator;
 import racingcar.util.Validator;
-import racingcar.view.InputReader;
 
 public class Computer {
-    private static int randomNumber;
-    private static final int MIN_GAME_NUMBER_RANGE = 0;
-    private static final int MAX_GAME_NUMBER_RANGE = 9;
-    public static List<Car> cars;
-    public static List<Car> winners;
-    private static int times;
+    private final int MIN_RANDOM_NUMBER_RANGE = 0;
+    private final int MAX_RANDOM_NUMBER_RANGE = 9;
+    private List<Car> cars;
+    private int times;
 
+    public Computer() {
+        this.cars = new ArrayList<>();
+    }
+
+    public Computer(List<Car> cars) {
+        this.cars = cars;
+    }
 
     public List<Car> getCars() {
         return cars;
-    }
-
-    public List<Car> getWinners() {
-        return winners;
     }
 
     public int getTimes() {
         return times;
     }
 
-    public static void inputCarNames() {
-        cars = new ArrayList<>(InputReader.readCarNames());
+    /* 사용자로부터 자동차 이름과 경주 횟수를 입력받는 메서드 */
+    public void prepareGame(List<Car> cars, int times) {
+        this.cars = new ArrayList<>(cars);
+        this.times = times;
+
+        validateInputs();
     }
 
-    public static void inputTimes() {
-        times = InputReader.readMoveTimes();
+    private void validateInputs() {
+        InputValidator.validateCarName(cars);
+        InputValidator.validateAttemptTimes(times);
     }
 
-    public static void moveCarWithRandomNumber() {
+    public void moveCars() {
         cars.forEach(car -> {
-            if(getRandomNumber()) {
+            if(shouldMove()) {
                 car.movePosition();
             }
         });
     }
 
-    public static List<Car> findWinners() {
-        if (cars == null || cars.isEmpty()) {
-            throw new IllegalStateException("[ERROR] 자동차 목록이 비어 있습니다.");
-        }
+    public List<Car> determineWinners() {
+        Validator.IsNotEmptyCarList(cars);
 
-        winners = new ArrayList<>();
+        int maxPosition = findMaxPosition();
 
-        int maxPosition = cars.stream()
+        return selectWinners(maxPosition);
+    }
+
+    private int findMaxPosition() {
+        return cars.stream()
                 .mapToInt(Car::getPosition)
                 .max()
                 .orElseThrow(() -> new IllegalStateException("[ERROR] position 값을 찾을 수 없습니다."));
+    }
 
+    private List<Car> selectWinners(int maxPosition) {
+        List<Car> winners = new ArrayList<>();
         for (Car car : cars) {
             if (car.getPosition() == maxPosition) {
                 winners.add(car);
             }
         }
-
         return winners;
     }
 
-    public static boolean getRandomNumber() {
-        randomNumber = pickRandomNumber();
-        return Validator.validateGoStop(randomNumber);
+    private boolean shouldMove() {
+        int randomNumber = pickRandomNumber();
+        return Validator.goOrStop(randomNumber);
     }
 
-    private static int pickRandomNumber() {
-        return Randoms.pickNumberInRange(MIN_GAME_NUMBER_RANGE, MAX_GAME_NUMBER_RANGE);
+    private int pickRandomNumber() {
+        return Randoms.pickNumberInRange(MIN_RANDOM_NUMBER_RANGE, MAX_RANDOM_NUMBER_RANGE);
     }
-
 }
